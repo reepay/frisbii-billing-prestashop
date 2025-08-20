@@ -1,0 +1,1 @@
+<li><a href="{$my_subscriptions_page}" title="Orders"><i class="icon-list-ol"></i><span>My Subscriptions</span></a></li>
