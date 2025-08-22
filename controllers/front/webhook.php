@@ -21,5 +21,7 @@ class BillwerkSubscriptionWebhookModuleFrontController extends ModuleFrontContro
                 $this->module->WebhookRenewSubscriptionOrder($request_body);
                 break;
         }
+
+        die(1);
     }
 }

@@ -242,8 +242,8 @@ class BillwerkSubscription extends PaymentModule
             $customer = new Customer($cart->id_customer);
             $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
 
-            $this->validateOrder($cart->id, Configuration::get('BILLWERKSUBSCRIPTION_RENEWAL_DEFAULT_STATUS_AFTER_CREATION'),
-                $total, $this->displayName, null, null, (int) $cart->id_currency, false, $customer->secure_key);
+            $order_status = _PS_OS_PAYMENT_;
+            $this->validateOrder($cart->id, $order_status, $total, $this->displayName, null, null, (int) $cart->id_currency, false, $customer->secure_key);
         }
     }
 

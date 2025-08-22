@@ -69,7 +69,7 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 $total = 0;
             }
 
-            $order_status = Configuration::get('BILLWERKSUBSCRIPTION_ORDER_DEFAULT_STATUS_AFTER_CREATION');
+            $order_status = _PS_OS_PAYMENT_;
             $this->module->validateOrder($cart->id, $order_status, $total, $this->module->displayName,
                 null, null, (int) $currency->id, false, $customer->secure_key);
             Tools::redirect('index.php?controller=order-confirmation&id_cart='.
