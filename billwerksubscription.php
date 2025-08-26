@@ -18,7 +18,7 @@ class BillwerkSubscription extends PaymentModule
     {
         $this->name = 'billwerksubscription';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.0';
+        $this->version = '1.1.0';
         $this->author = 'Frisbii';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [

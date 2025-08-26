@@ -75,11 +75,8 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
             $data['error'] = false;
         }
 
-        $on_hold = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD');
-        $cancel = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL');
-        $data['enable_on_hold'] = $on_hold;
-        $data['enable_cancel'] = $cancel;
-
+        $data['enable_on_hold'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD');
+        $data['enable_cancel'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL');
         $data['in_trial'] = $subscription['in_trial'];
 
         if ($subscription['in_trial']) {

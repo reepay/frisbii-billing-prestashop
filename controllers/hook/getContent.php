@@ -85,7 +85,7 @@ class BillwerkSubscriptionGetContentController
                     ],
                     [
                         'type' => 'switch',
-                        'label' => $this->module->l('Enable on Hold'),
+                        'label' => $this->module->l('Enable Self-service "Pause"'),
                         'name' => 'BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD',
                         'is_bool' => true,
                         'values' => [
@@ -102,27 +102,8 @@ class BillwerkSubscriptionGetContentController
                         ],
                     ],
                     [
-                        'type' => 'select',
-                        'label' => $this->module->l('Compensation method for On Hold'),
-                        'name' => 'BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_FOR_ON_HOLD',
-                        'required' => false,
-                        'desc' => $this->module->l('Compensation method when setting a subscription to On Hold'),
-                        'default_value' => (int) $this->context->country->id,
-                        'options' => [
-                            'query' => [
-                                ['key' => 'none', 'name' => $this->module->l('None')],
-                                ['key' => 'full_refund', 'name' => $this->module->l('Full refund')],
-                                ['key' => 'prorated_refund', 'name' => $this->module->l('Prorated refund')],
-                                ['key' => 'full_credit', 'name' => $this->module->l('Full credit')],
-                                ['key' => 'prorated_credit', 'name' => $this->module->l('Prorated credit')],
-                            ],
-                            'name' => 'name',
-                            'id' => 'key',
-                        ],
-                    ],
-                    [
                         'type' => 'switch',
-                        'label' => $this->module->l('Enable Cancel'),
+                        'label' => $this->module->l('Enable Self-service "Cancel"'),
                         'name' => 'BILLWERKSUBSCRIPTION_ENABLE_CANCEL',
                         'is_bool' => true,
                         'values' => [
@@ -137,171 +118,6 @@ class BillwerkSubscriptionGetContentController
                                 'label' => 'Disabled',
                             ],
                         ]],
-                    [
-                        'type' => 'select',
-                        'label' => $this->module->l('Compensation method for Cancel'),
-                        'name' => 'BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_CANCEL',
-                        'desc' => $this->module->l('Compensation method when cancelling a subscription.'),
-                        'required' => false,
-                        'default_value' => (int) $this->context->country->id,
-                        'options' => [
-                            'query' => [
-                                ['key' => 'none', 'name' => $this->module->l('None')],
-                                ['key' => 'full_refund', 'name' => $this->module->l('Full refund')],
-                                ['key' => 'prorated_refund', 'name' => $this->module->l('Prorated refund')],
-                                ['key' => 'full_credit', 'name' => $this->module->l('Full credit')],
-                                ['key' => 'prorated_credit', 'name' => $this->module->l('Prorated credit')],
-                            ],
-                            'name' => 'name',
-                            'id' => 'key',
-                        ],
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->module->l('Subscription order default status after creation '),
-                        'name' => 'BILLWERKSUBSCRIPTION_ORDER_DEFAULT_STATUS_AFTER_CREATION',
-                        'desc' => $this->module->l('Setting to control witch status the Frisbii Optimize order in Prestashop gets.'),
-
-                        'required' => false,
-                        'options' => [
-                            'query' => OrderState::getOrderStates((int) Configuration::get('PS_LANG_DEFAULT')),
-                            'id' => 'id_order_state',
-                            'name' => 'name',
-                            'desc' => '',
-                        ],
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->module->l('Renewal order default status after creation'),
-                        'name' => 'BILLWERKSUBSCRIPTION_RENEWAL_DEFAULT_STATUS_AFTER_CREATION',
-                        'desc' => $this->module->l('Setting to control witch status the Frisbii Optimize renewal order in Prestashop gets.'),
-                        'required' => false,
-                        'options' => [
-                            'query' => [
-                                ['key' => 'pending_payment', 'name' => $this->module->l('Pending payment')],
-                                ['key' => 'processing', 'name' => $this->module->l('Processing')],
-                                ['key' => 'on_hold', 'name' => $this->module->l('On hold')],
-                                ['key' => 'completed', 'name' => $this->module->l('Completed')],
-                                ['key' => 'cancelled', 'name' => $this->module->l('Cancelled')],
-                                ['key' => 'refunded', 'name' => $this->module->l('Refunded')],
-                                ['key' => 'failed', 'name' => $this->module->l('Failed')],
-                                ['key' => 'draft', 'name' => $this->module->l('Draft')],
-                            ],
-                            'name' => 'name',
-                            'id' => 'key',
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Enable manual subscription start date'),
-                        'name' => 'BILLWERKSUBSCRIPTION_ENABLE_MANUAL_START_DATE',
-                        'desc' => $this->module->l('This will set a temporary start date for the subscription that is 
-                        far in the future. We recommend removing the start date tag from your sign up emails in Frisbii Optimize.'),
-                        'is_bool' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => 'Enabled',
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => 'Disabled',
-                            ],
-                        ]],
-                    [
-                        'type' => 'select',
-                        'label' => $this->module->l('Manual start date order status'),
-                        'name' => 'BILLWERKSUBSCRIPTION_MANUAL_START_DATE_ORDER_STATUS',
-                        'required' => false,
-                        'options' => [
-                            'query' => [
-                                ['key' => 'pending_payment', 'name' => $this->module->l('Pending payment')],
-                                ['key' => 'processing', 'name' => $this->module->l('Processing')],
-                                ['key' => 'on_hold', 'name' => $this->module->l('On hold')],
-                                ['key' => 'completed', 'name' => $this->module->l('Completed')],
-                                ['key' => 'cancelled', 'name' => $this->module->l('Cancelled')],
-                                ['key' => 'refunded', 'name' => $this->module->l('Refunded')],
-                                ['key' => 'failed', 'name' => $this->module->l('Failed')],
-                                ['key' => 'draft', 'name' => $this->module->l('Draft')],
-                            ],
-                            'name' => 'name',
-                            'id' => 'key',
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Enable manual subscription start date'),
-                        'name' => 'BILLWERKSUBSCRIPTION_ENABLE_MANUAL_SUBSCRIPTION_START_DATE',
-                        'is_bool' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => 'Enabled',
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => 'Disabled',
-                            ],
-                        ]],
-                    [
-                        'type' => 'select',
-                        'label' => $this->module->l('Manual start date order status '),
-                        'name' => 'BILLWERKSUBSCRIPTION_MANUAL_SUBSCRIPTION_START_DATE_ORDER_STATUS',
-                        'required' => false,
-                        'options' => [
-                            'query' => [
-                                ['key' => 'pending_payment', 'name' => $this->module->l('Pending payment')],
-                                ['key' => 'processing', 'name' => $this->module->l('Processing')],
-                                ['key' => 'on_hold', 'name' => $this->module->l('On hold')],
-                                ['key' => 'completed', 'name' => $this->module->l('Completed')],
-                                ['key' => 'cancelled', 'name' => $this->module->l('Cancelled')],
-                                ['key' => 'refunded', 'name' => $this->module->l('Refunded')],
-                                ['key' => 'failed', 'name' => $this->module->l('Failed')],
-                                ['key' => 'draft', 'name' => $this->module->l('Draft')],
-                            ],
-                            'name' => 'name',
-                            'id' => 'key',
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Disable Subscription order mails'),
-                        'name' => 'BILLWERKSUBSCRIPTION_DISABLE_SUBSCRIPTION_ORDER_MAILS',
-                        'is_bool' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => 'Enabled',
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => 'Disabled',
-                            ],
-                        ]],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Disable Renewals order mails'),
-                        'name' => 'BILLWERKSUBSCRIPTION_DISABLE_RENEWALS_ORDER_MAILS',
-                        'is_bool' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => 'Enabled',
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => 'Disabled',
-                            ],
-                        ]],
-
                     [
                         'type' => 'switch',
                         'label' => $this->module->l('Debug mode'),
@@ -351,17 +167,7 @@ class BillwerkSubscriptionGetContentController
             'BILLWERK_PRIVATE_API_KEY' => Configuration::get('BILLWERK_PRIVATE_API_KEY'),
             'BILLWERKSUBSCRIPTION_ENABLED' => Configuration::get('BILLWERKSUBSCRIPTION_ENABLED', 0),
             'BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD' => Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD', 0),
-            'BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_FOR_ON_HOLD' => Configuration::get('BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_FOR_ON_HOLD'),
             'BILLWERKSUBSCRIPTION_ENABLE_CANCEL' => Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL'),
-            'BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_CANCEL' => Configuration::get('BILLWERKSUBSCRIPTION_COMPENSATION_METHOD_CANCEL'),
-            'BILLWERKSUBSCRIPTION_ORDER_DEFAULT_STATUS_AFTER_CREATION' => Configuration::get('BILLWERKSUBSCRIPTION_ORDER_DEFAULT_STATUS_AFTER_CREATION'),
-            'BILLWERKSUBSCRIPTION_RENEWAL_DEFAULT_STATUS_AFTER_CREATION' => Configuration::get('BILLWERKSUBSCRIPTION_RENEWAL_DEFAULT_STATUS_AFTER_CREATION'),
-            'BILLWERKSUBSCRIPTION_ENABLE_MANUAL_START_DATE' => Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_MANUAL_START_DATE'),
-            'BILLWERKSUBSCRIPTION_MANUAL_START_DATE_ORDER_STATUS' => Configuration::get('BILLWERKSUBSCRIPTION_MANUAL_START_DATE_ORDER_STATUS'),
-            'BILLWERKSUBSCRIPTION_ENABLE_MANUAL_SUBSCRIPTION_START_DATE' => Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_MANUAL_SUBSCRIPTION_START_DATE'),
-            'BILLWERKSUBSCRIPTION_MANUAL_SUBSCRIPTION_START_DATE_ORDER_STATUS' => Configuration::get('BILLWERKSUBSCRIPTION_MANUAL_SUBSCRIPTION_START_DATE_ORDER_STATUS'),
-            'BILLWERKSUBSCRIPTION_DISABLE_SUBSCRIPTION_ORDER_MAILS' => Configuration::get('BILLWERKSUBSCRIPTION_DISABLE_SUBSCRIPTION_ORDER_MAILS'),
-            'BILLWERKSUBSCRIPTION_DISABLE_RENEWALS_ORDER_MAILS' => Configuration::get('BILLWERKSUBSCRIPTION_DISABLE_RENEWALS_ORDER_MAILS'),
             'BILLWERKSUBSCRIPTION_DEBUG_ENABLED' => Configuration::get('BILLWERKSUBSCRIPTION_DEBUG_ENABLED'),
         ];
     }
