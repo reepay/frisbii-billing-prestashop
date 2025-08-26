@@ -56,17 +56,24 @@ class AdminOrdersController extends AdminOrdersControllerCore
 
     public function frisbiiSubscriptionHandle($id_order)
     {
-        $result = BillwerkSubscriptionOrder::getByShppIdOrderId($this->context->shop->id, $id_order);
+        $query = new DbQuery();
+        $query->from('billwerksubscription_order');
+        $query->where('`id_shop` = '.(int) $this->context->shop->id);
+        $query->where('`id_order` = '.(int) $id_order);
+        $result = Db::getInstance()->getRow($query);
         if ($result) {
             $link = "https://app.frisbii.com/#/rp/subscriptions/subscription/{$result['sub_handle']}";
-
             return "<a href = {$link} target='_blank'>".$result['sub_handle'].'</a>';
         }
     }
 
     public function frisbiiSubscriptionOrderType($id_order)
     {
-        $result = BillwerkSubscriptionOrder::getByShppIdOrderId($this->context->shop->id, $id_order);
+        $query = new DbQuery();
+        $query->from('billwerksubscription_order');
+        $query->where('`id_shop` = '.(int) $this->context->shop->id);
+        $query->where('`id_order` = '.(int) $id_order);
+        $result = Db::getInstance()->getRow($query);
         if ($result) {
             return $result['order_type'];
         }
