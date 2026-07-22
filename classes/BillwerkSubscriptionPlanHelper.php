@@ -100,10 +100,10 @@ class BillwerkSubscriptionPlanHelper
         $out = '';
         $result = $this->getPlanMerchantData();
         foreach ($result as $key => $value) {
-            $out .= "<tr> <td> {$key} </td> <td> {$value} </td> </tr>";
+            $out .= '<tr><td>'.htmlspecialchars($key).'</td><td>'.htmlspecialchars($value).'</td></tr>';
         }
 
-        return "<table class=\"table\" style=\"width: 50%\"> {$out} </table>";
+        return '<table class="table table-striped">'.$out.'</table>';
     }
 
     private function preparePrice($amount, $currency)

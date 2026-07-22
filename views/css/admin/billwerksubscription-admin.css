@@ -1,0 +1,56 @@
+/* Frisbii Subscription - product "Modules" tab styling */
+
+.module-billwerksubscription .top-logo {
+    width: 64px;
+    height: 64px;
+    max-width: 64px;
+    max-height: 64px;
+    object-fit: contain;
+}
+
+.billwerksubscription-panel .card-header h3 {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.billwerksubscription-panel .card-header h3 .material-icons {
+    margin-right: .5rem;
+}
+
+.billwerksubscription-panel .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.billwerksubscription-panel .help-block {
+    margin-top: .5rem;
+    margin-bottom: 0;
+}
+
+.billwerksubscription-plan-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.billwerksubscription-plan-toolbar select {
+    flex: 1 1 260px;
+    min-width: 200px;
+}
+
+.billwerksubscription-plan-toolbar .btn {
+    white-space: nowrap;
+}
+
+#billwerk-subscription-plan-details table.table {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+#billwerk-subscription-plan-details table.table td:first-child {
+    width: 45%;
+    font-weight: 600;
+}
