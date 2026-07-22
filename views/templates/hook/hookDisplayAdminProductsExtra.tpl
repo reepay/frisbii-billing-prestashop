@@ -32,7 +32,10 @@
                         {/foreach}
                     </select>
                     <input id="billwerk_plan_name" type="hidden" name="plan-name" value="{$plan->name}">
-                    <button type="submit" name="submitState" class="btn btn-outline-secondary">
+                    {* Was type="submit", which submitted the whole product form instead of
+                       just refreshing the plan list. Now a plain button handled via AJAX
+                       in billwerksubscription.js (refreshPlanList). *}
+                    <button type="button" id="billwerk-refresh-plans" class="btn btn-outline-secondary">
                         <i class="material-icons">refresh</i> {l s='Refresh list' mod='billwerksubscription'}
                     </button>
                     <button type="button" id="new-plan-create" class="btn btn-outline-secondary">
@@ -60,5 +63,7 @@
 <link rel="stylesheet" type="text/css" href="{$pc_base_dir}views/css/admin/billwerksubscription-admin.css?hash={$hash}">
 <script type="text/javascript">
     window.ajax_action_url = "{$ajax_action_url}";
+    {* Used by refreshPlanList() in billwerksubscription.js for the "Refresh list" button. *}
+    window.ajax_get_plans_url = "{$ajax_get_plans_url}";
 </script>
 <script type="text/javascript" src="{$pc_base_dir}views/js/admin/billwerksubscription.js?hash={$hash}"></script>

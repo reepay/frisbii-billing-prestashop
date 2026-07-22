@@ -107,7 +107,11 @@ class BillwerkSubscription extends PaymentModule
     {
         $controller = $this->getHookController('displayAdminProductsExtra');
 
-        return $controller->run();
+        // Forward $params (contains id_product) to the controller. On PS9's new
+        // Product page id_product is not available via $_GET/Tools::getValue(),
+        // it's only passed through the hook's $params, so dropping it here made
+        // the controller unable to look up the product's saved plan.
+        return $controller->run($params);
     }
 
     public function hookActionProductUpdate($params)
