@@ -18,7 +18,7 @@ class BillwerkSubscription extends PaymentModule
     {
         $this->name = 'billwerksubscription';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.0';
+        $this->version = '1.1.1';
         $this->author = 'Frisbii';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -41,18 +41,42 @@ class BillwerkSubscription extends PaymentModule
         }
 
         return parent::install()
-            && $this->hooks() && $this->install_db();
+            && $this->hooks() && $this->install_db() && $this->installTab();
+    }
+
+    public function uninstall()
+    {
+        return $this->uninstallTab() && parent::uninstall();
+    }
+
+    public function installTab()
+    {
+        $tab = new Tab();
+        $tab->class_name = 'AdminAjaxBillwerkSubscription';
+        $tab->module = $this->name;
+        $tab->active = true;
+        $tab->id_parent = -1;
+        $tab->name = array_fill_keys(Language::getIDs(false), $this->displayName);
+
+        return $tab->add();
+    }
+
+    public function uninstallTab()
+    {
+        $id_tab = (int) Tab::getIdFromClassName('AdminAjaxBillwerkSubscription');
+        if ($id_tab) {
+            $tab = new Tab($id_tab);
+            if (Validate::isLoadedObject($tab)) {
+                return $tab->delete();
+            }
+        }
+
+        return true;
     }
 
     public function getContent()
     {
         $controller = $this->getHookController('getContent');
-        $ajax_hook = Tools::getValue('ajax_hook');
-        if ('' != $ajax_hook) {
-            if (method_exists($controller, $ajax_hook)) {
-                $controller->processAjax();
-            }
-        }
 
         return $controller->run();
     }

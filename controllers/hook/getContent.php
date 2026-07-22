@@ -32,16 +32,6 @@ class BillwerkSubscriptionGetContentController
         return $output.$this->renderForm();
     }
 
-    public function processAjax()
-    {
-        if ($handle = Tools::getValue('handle')) {
-            $planData = BillwerkPlusApi::getSubscriptionPlan($handle, false);
-            $subscription_plan = new BillwerkSubscriptionPlan($planData);
-            $planHelper = new BillwerkSubscriptionPlanHelper($subscription_plan);
-            echo $planHelper->getPlanMerchantDataTable();
-        }
-    }
-
     public function saveData()
     {
         return $this->postProcess();

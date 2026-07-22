@@ -23,9 +23,8 @@ class BillwerkSubscriptionDisplayAdminProductsExtraController
             'plan_handle' => $product['plan_handle'],
         ]);
 
-        $ajax_action_url = $this->context->link->getAdminLink('AdminModules', true);
-        $ajax_action_url = str_replace('index.php', 'ajax-tab.php', $ajax_action_url);
-        $ajax_action_url .= '&configure=billwerksubscription&ajax_hook=processAjax';
+        $ajax_action_url = $this->context->link->getAdminLink('AdminAjaxBillwerkSubscription');
+        $ajax_action_url .= '&ajax=1&action=GetPlan';
 
         $this->context->smarty->assign('ajax_action_url', $ajax_action_url);
         $plans = BillwerkPlusApi::getSubscriptionPlans();
