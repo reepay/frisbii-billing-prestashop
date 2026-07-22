@@ -23,7 +23,7 @@ class BillwerkSubscription extends PaymentModule
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
             'min' => '1.6.0',
-            'max' => '1.7.9',
+            'max' => '9.99.99',
         ];
         $this->need_instance = 0;
 
