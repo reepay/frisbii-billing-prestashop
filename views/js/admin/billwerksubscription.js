@@ -49,7 +49,30 @@ function getPlan(handle) {
     }).done(function(data) {
         $('#billwerk-subscription-plan-details').show();
         $('#billwerk-subscription-plan-details').html(data);
+        if (handle) {
+            revealModulePanel();
+        }
     }).fail(function() {
         alert("Sorry. Server unavailable. ");
     });
+}
+
+// The product edit page's "Modules" tab hides every hooked module's panel
+// behind its own "Configure" button (core ProductModulesManager sets d-none
+// on everything on load). When this product already has a Frisbii plan
+// attached, skip that extra click and reveal our panel the same way
+// clicking "Configure" would, once the plan details above have finished
+// loading (so it also works right after a fresh page refresh).
+function revealModulePanel() {
+    var moduleId = 'module-billwerksubscription';
+
+    $('.module-render-container.all-modules').addClass('d-none');
+    $('.module-selection').removeClass('d-none');
+    $('.module-contents').removeClass('d-none');
+    $('.modules-list-select').val(moduleId);
+
+    $('.module-selection .module-render-container').addClass('d-none');
+    $('.module-contents .module-render-container').addClass('d-none');
+    $('.module-selection .module-render-container.' + moduleId).removeClass('d-none');
+    $('.module-contents .module-render-container.' + moduleId).removeClass('d-none');
 }
