@@ -144,8 +144,6 @@ class BillwerkSubscriptionGetContentController
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFormValues(),
-            'languages' => 2,
-            'id_language' => 3,
         ];
 
         return $helper->generateForm([$fields_form]);
