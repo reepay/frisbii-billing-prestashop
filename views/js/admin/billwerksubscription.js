@@ -10,7 +10,37 @@ $(document).ready(function () {
          window.open('https://app.frisbii.com/#/rp/config/plans/create');
     });
 
+    $('#billwerk-refresh-plans').click(function () {
+        refreshPlanList();
+    });
+
 });
+
+// "Refresh list" used to be a form-submit button with no matching submit handler,
+// so clicking it just reloaded/saved the whole product form instead of refreshing
+// the plan list. Fetch the plans via AJAX (ajaxProcessGetPlans) and rebuild the
+// <select> in place instead, preserving the currently selected plan if it's still present.
+function refreshPlanList() {
+    var $select = $('#billwerk_select_plan');
+    var currentHandle = $select.val();
+
+    $.ajax({
+        url: window.ajax_get_plans_url,
+        dataType: 'json',
+    }).done(function (plans) {
+        $select.find('option[value!=""]').remove();
+        $.each(plans, function (i, plan) {
+            var $option = $('<option></option>')
+                .attr('value', plan.handle)
+                .attr('data-name', plan.name)
+                .text(plan.name);
+            $select.append($option);
+        });
+        $select.val(currentHandle);
+    }).fail(function () {
+        alert("Sorry. Server unavailable. ");
+    });
+}
 
 function getPlan(handle) {
     $.ajax({
@@ -19,7 +49,30 @@ function getPlan(handle) {
     }).done(function(data) {
         $('#billwerk-subscription-plan-details').show();
         $('#billwerk-subscription-plan-details').html(data);
+        if (handle) {
+            revealModulePanel();
+        }
     }).fail(function() {
         alert("Sorry. Server unavailable. ");
     });
+}
+
+// The product edit page's "Modules" tab hides every hooked module's panel
+// behind its own "Configure" button (core ProductModulesManager sets d-none
+// on everything on load). When this product already has a Frisbii plan
+// attached, skip that extra click and reveal our panel the same way
+// clicking "Configure" would, once the plan details above have finished
+// loading (so it also works right after a fresh page refresh).
+function revealModulePanel() {
+    var moduleId = 'module-billwerksubscription';
+
+    $('.module-render-container.all-modules').addClass('d-none');
+    $('.module-selection').removeClass('d-none');
+    $('.module-contents').removeClass('d-none');
+    $('.modules-list-select').val(moduleId);
+
+    $('.module-selection .module-render-container').addClass('d-none');
+    $('.module-contents .module-render-container').addClass('d-none');
+    $('.module-selection .module-render-container.' + moduleId).removeClass('d-none');
+    $('.module-contents .module-render-container.' + moduleId).removeClass('d-none');
 }

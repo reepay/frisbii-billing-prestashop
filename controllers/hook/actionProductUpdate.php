@@ -25,7 +25,7 @@ class BillwerkSubscriptionActionProductUpdateController
         }
 
         if ($currency != $plan['currency']) {
-            $this->context->controller->errors[] = '<b>Frisbii Subscription</b>: the currency provided in subscription 
+            $this->context->controller->errors[] = '<b></b>: the currency provided in subscription 
             plan is not supported. <br/ > Allowed currency is: <b>'.$currency.'</b>'
             .' Please choose another subscription plan.';
         } else {

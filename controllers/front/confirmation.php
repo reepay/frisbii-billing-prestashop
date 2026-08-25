@@ -7,7 +7,7 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
         parent::postProcess();
 
         if (!Configuration::get('BILLWERKSUBSCRIPTION_ENABLED')) {
-            exit('Frisbii Subscriptions is not enabled');
+            exit('Frisbii Subscription is not enabled');
         }
 
         $order_type = Tools::getValue('t');
