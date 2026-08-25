@@ -52,7 +52,7 @@ class BillwerkSubscriptionGetContentController
         $fields_form = [
             'form' => [
                 'legend' => [
-                    'title' => 'Frisbii Subscription',
+                    'title' => 'Frisbii Billing',
                     'icon' => 'icon-envelop',
                 ],
                 'input' => [

@@ -29,8 +29,8 @@ class BillwerkSubscription extends PaymentModule
 
         $this->bootstrap = true;
         parent::__construct();
-        $this->displayName = $this->l('Frisbii Subscription');
-        $this->description = $this->l('Frisbii Subscription module allows to sell subscription produce with Frisbii account');
+        $this->displayName = $this->l('Frisbii Billing');
+        $this->description = $this->l('Frisbii Billing module allows to sell subscription products with Frisbii account');
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
     }
 

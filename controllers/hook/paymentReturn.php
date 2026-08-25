@@ -15,7 +15,7 @@ class billwerksubscriptionPaymentReturnController
         $enabled = Configuration::get('BILLWERKSUBSCRIPTION_ENABLED');
 
         if (!$enabled) {
-            exit("Frisbii Subscription Payment's not enabled");
+            exit("Frisbii Billing Payment's not enabled");
         }
 
         if (PS_1_6) {
