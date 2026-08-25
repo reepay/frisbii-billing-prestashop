@@ -42,7 +42,7 @@ class AdminOrdersController extends AdminOrdersControllerCore
             $this->_select .= ',a.id_order AS billwerk_sub_handle, a.id_order as frisbii_inv,';
 
             $this->fields_list['billwerk_sub_handle'] = [
-                'title' => $this->l('Frisbii Billing Handle'),
+                'title' => $this->l('Frisbii Subscription Handle'),
                 'align' => 'text-center',
                 'callback' => 'frisbiiSubscriptionHandle',
                 'orderby' => false,

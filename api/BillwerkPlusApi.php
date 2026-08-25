@@ -5,10 +5,18 @@ class BillwerkPlusApi
     protected static function curlSession()
     {
         $privateApiKey = Configuration::get('BILLWERK_PRIVATE_API_KEY');
+        // Some PHP/Apache setups (e.g. WAMP) ship without a configured CA bundle
+        // (curl.cainfo/openssl.cafile empty), so cURL fails HTTPS requests to the
+        // Frisbii/Reepay API with "SSL certificate problem: unable to get local
+        // issuer certificate" (curl errno 60) even though the request itself is fine.
+        // Reuse PrestaShop core's own CA bundle (refreshed into var/cache) to fix this
+        // without depending on the server's PHP/OS certificate configuration.
+        Tools::refreshCACertFile();
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($ch, CURLOPT_USERPWD, $privateApiKey.':');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CAINFO, _PS_CACHE_CA_CERT_FILE_);
 
         return $ch;
     }

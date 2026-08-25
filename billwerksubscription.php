@@ -18,19 +18,19 @@ class BillwerkSubscription extends PaymentModule
     {
         $this->name = 'billwerksubscription';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.0';
+        $this->version = '1.1.2';
         $this->author = 'Frisbii';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
             'min' => '1.6.0',
-            'max' => '1.7.9',
+            'max' => '9.99.99',
         ];
         $this->need_instance = 0;
 
         $this->bootstrap = true;
         parent::__construct();
-        $this->displayName = $this->l('Frisbii Billing');
-        $this->description = $this->l('Frisbii Billing module allows to sell subscription products with Frisbii account');
+        $this->displayName = $this->l('Frisbii Subscription');
+        $this->description = $this->l('Frisbii Subscription module allows to sell subscription products with Frisbii account');
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
     }
 
@@ -41,18 +41,42 @@ class BillwerkSubscription extends PaymentModule
         }
 
         return parent::install()
-            && $this->hooks() && $this->install_db();
+            && $this->hooks() && $this->install_db() && $this->installTab();
+    }
+
+    public function uninstall()
+    {
+        return $this->uninstallTab() && parent::uninstall();
+    }
+
+    public function installTab()
+    {
+        $tab = new Tab();
+        $tab->class_name = 'AdminAjaxBillwerkSubscription';
+        $tab->module = $this->name;
+        $tab->active = true;
+        $tab->id_parent = -1;
+        $tab->name = array_fill_keys(Language::getIDs(false), $this->displayName);
+
+        return $tab->add();
+    }
+
+    public function uninstallTab()
+    {
+        $id_tab = (int) Tab::getIdFromClassName('AdminAjaxBillwerkSubscription');
+        if ($id_tab) {
+            $tab = new Tab($id_tab);
+            if (Validate::isLoadedObject($tab)) {
+                return $tab->delete();
+            }
+        }
+
+        return true;
     }
 
     public function getContent()
     {
         $controller = $this->getHookController('getContent');
-        $ajax_hook = Tools::getValue('ajax_hook');
-        if ('' != $ajax_hook) {
-            if (method_exists($controller, $ajax_hook)) {
-                $controller->processAjax();
-            }
-        }
 
         return $controller->run();
     }
@@ -83,7 +107,11 @@ class BillwerkSubscription extends PaymentModule
     {
         $controller = $this->getHookController('displayAdminProductsExtra');
 
-        return $controller->run();
+        // Forward $params (contains id_product) to the controller. On PS9's new
+        // Product page id_product is not available via $_GET/Tools::getValue(),
+        // it's only passed through the hook's $params, so dropping it here made
+        // the controller unable to look up the product's saved plan.
+        return $controller->run($params);
     }
 
     public function hookActionProductUpdate($params)

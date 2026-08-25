@@ -32,16 +32,6 @@ class BillwerkSubscriptionGetContentController
         return $output.$this->renderForm();
     }
 
-    public function processAjax()
-    {
-        if ($handle = Tools::getValue('handle')) {
-            $planData = BillwerkPlusApi::getSubscriptionPlan($handle, false);
-            $subscription_plan = new BillwerkSubscriptionPlan($planData);
-            $planHelper = new BillwerkSubscriptionPlanHelper($subscription_plan);
-            echo $planHelper->getPlanMerchantDataTable();
-        }
-    }
-
     public function saveData()
     {
         return $this->postProcess();
@@ -52,7 +42,7 @@ class BillwerkSubscriptionGetContentController
         $fields_form = [
             'form' => [
                 'legend' => [
-                    'title' => 'Frisbii Billing',
+                    'title' => 'Frisbii Subscription',
                     'icon' => 'icon-envelop',
                 ],
                 'input' => [
@@ -154,8 +144,6 @@ class BillwerkSubscriptionGetContentController
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFormValues(),
-            'languages' => 2,
-            'id_language' => 3,
         ];
 
         return $helper->generateForm([$fields_form]);
