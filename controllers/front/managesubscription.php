@@ -10,7 +10,15 @@ class BillwerkSubscriptionManageSubscriptionModuleFrontController extends Module
                 Context::getContext()->language->id, null, false, $id_shop));
         }
 
-        switch (Tools::getValue('action')) {
+        $action = Tools::getValue('action');
+        // The handle goes straight into the Frisbii API URL (FP-32); only a real sub-<digits> handle may pass.
+        if (in_array($action, ['pause', 'activate', 'cancel', 'uncancel', 'change-payment'], true)
+            && !BillwerkSubscriptionSubscriptions::isValidHandle(Tools::getValue('handle'))) {
+            Tools::redirect(Context::getContext()->link->getPageLink('my-account', true,
+                Context::getContext()->language->id, null, false, $id_shop));
+        }
+
+        switch ($action) {
             case 'pause':
                 $this->pauseSubscription(Tools::getValue('handle'));
                 break;
