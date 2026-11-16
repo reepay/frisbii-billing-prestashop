@@ -21,7 +21,7 @@ class BillwerkSubscription extends PaymentModule
     {
         $this->name = 'billwerksubscription';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.2';
+        $this->version = '1.1.3';
         $this->author = 'Frisbii';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -93,6 +93,7 @@ class BillwerkSubscription extends PaymentModule
             'payment',
             'displayPayment',
             'displayBeforePayment',
+            'paymentOptions',
             'displayHeader',
             'displayProductContent',
             'displayCustomerAccount',
@@ -134,6 +135,30 @@ class BillwerkSubscription extends PaymentModule
         $controller = $this->getHookController('displayPayment');
 
         return $controller->run($params);
+    }
+
+    /**
+     * PrestaShop 1.7+/8/9 checkout only renders options returned here (the legacy payment hooks are
+     * not called). Shown only for carts that contain a subscription product. Posts straight to the
+     * validation controller, which opens the Frisbii hosted page.
+     */
+    public function hookPaymentOptions($params)
+    {
+        if (!Configuration::get('BILLWERKSUBSCRIPTION_ENABLED') || !$this->active) {
+            return [];
+        }
+        if (!isset($params['cart']) || !($params['cart'] instanceof Cart) || !$this->cartHasSubscriptionProducts($params['cart'])) {
+            return [];
+        }
+
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setModuleName($this->name)
+            ->setCallToActionText($this->l('Pay with Frisbii subscription'))
+            ->setAction($this->context->link->getModuleLink($this->name, 'validation', [], true))
+            ->setInputs(['is_submit' => ['name' => 'is_submit', 'type' => 'hidden', 'value' => '1']])
+            ->setAdditionalInformation($this->l('You will be redirected to the Frisbii payment window. After payment you return to the shop.'));
+
+        return [$option];
     }
 
     public function hookDisplayHeader($params)

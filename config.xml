@@ -2,7 +2,7 @@
 <module>
 	<name>billwerksubscription</name>
 	<displayName><![CDATA[Frisbii Subscription]]></displayName>
-	<version><![CDATA[1.1.2]]></version>
+	<version><![CDATA[1.1.3]]></version>
 	<description><![CDATA[Frisbii Subscription module allows to sell subscription products with Frisbii account]]></description>
 	<author><![CDATA[Frisbii]]></author>
 	<tab><![CDATA[payments_gateways]]></tab>

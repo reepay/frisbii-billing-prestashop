@@ -55,7 +55,8 @@ class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontCon
                 PrestaShopLogger::addLOg('Subscription response params: '.print_r($response, true), 3);
             }
             $this->module->setFlashMessage('frisbii_checkout_error', 'Some error occurred.');
-            $url = Context::getContext()->link->getModuleLink('billwerksubscription', 'payment', [], true);
+            // The legacy payment page template does not exist in PS 1.7+/8/9: go back to the checkout.
+            $url = Context::getContext()->link->getPageLink('order', true, null, ['step' => 3]);
             Tools::redirect($url);
         }
     }
