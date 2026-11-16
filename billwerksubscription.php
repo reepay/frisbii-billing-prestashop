@@ -163,7 +163,11 @@ class BillwerkSubscription extends PaymentModule
 
     public function hookDisplayHeader($params)
     {
-        $this->context->controller->addCSS($this->_path.'/views/css/styles.css');
+        $this->context->controller->registerStylesheet(
+            'module-billwerksubscription-styles',
+            'modules/'.$this->name.'/views/css/styles.css',
+            ['media' => 'all', 'priority' => 150]
+        );
     }
 
     public function hookDisplayProductPriceBlock($params)

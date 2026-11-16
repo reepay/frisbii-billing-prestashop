@@ -1,152 +1,64 @@
-{if $data['sb_action_success']}
-    <div class="bootstrap">
-        <div class="module_confirmation conf confirm alert alert-success">
-            <button type="button" class="close" data-dismiss="alert">×</button>
-            {$data['sb_action_success']}
-        </div>
+{extends file='customer/page.tpl'}
+
+{block name='page_title'}
+  {l s='Subscription' mod='billwerksubscription'} {$data['handle']|escape:'html':'UTF-8'}
+{/block}
+
+{block name='account_link'}
+  <a class="btn btn-outline-tertiary account-menu__back" href="{$data['my-subscription-page']|escape:'html':'UTF-8'}">
+    <i class="material-icons" aria-hidden="true">&#xE5C4;</i>
+    {l s='My Subscriptions' mod='billwerksubscription'}
+  </a>
+{/block}
+
+{block name='page_content'}
+  {if $data['sb_action_success']}
+    <div class="alert alert-success">{$data['sb_action_success']|escape:'html':'UTF-8'}</div>
+  {/if}
+  {if $data['sb_action_error']}
+    <div class="alert alert-danger">{$data['sb_action_error']|escape:'html':'UTF-8'}</div>
+  {/if}
+  {if $data['error']}
+    <p class="alert alert-warning">{l s='Subscription not found' mod='billwerksubscription'}</p>
+  {/if}
+
+  <div class="bws-card">
+    <div class="bws-card__head">
+      <span class="bws-card__handle">{$data['plan']|escape:'html':'UTF-8'}</span>
+      <span class="bws-badge bws-badge--{$data['state']|escape:'html':'UTF-8'}">{$data['state_name']|escape:'html':'UTF-8'}</span>
     </div>
-{/if}
 
-{if $data['sb_action_error']}
-    <div class="bootstrap">
-        <div class="alert alert-danger">
-            <button type="button" class="close" data-dismiss="alert">×</button>
-            {$data['sb_action_error']}
-        </div>
-    </div>
-{/if}
+    <dl class="bws-card__facts">
+      {if $data['in_trial'] && $data['state'] == 'active'}
+        <div><dt>{l s='Trial period start' mod='billwerksubscription'}</dt><dd>{$data['trial_start']|escape:'html':'UTF-8'}</dd></div>
+        <div><dt>{l s='Trial period end' mod='billwerksubscription'}</dt><dd>{$data['trial_end']|escape:'html':'UTF-8'}</dd></div>
+      {/if}
+      <div><dt>{l s='Start Payment date' mod='billwerksubscription'}</dt><dd>{$data['first_period_start']|escape:'html':'UTF-8'}</dd></div>
+      <div><dt>{l s='Last Payment date' mod='billwerksubscription'}</dt><dd>{$data['current_period_start']|escape:'html':'UTF-8'}</dd></div>
+      <div><dt>{l s='Next Payment date' mod='billwerksubscription'}</dt><dd>{$data['next_period_start']|escape:'html':'UTF-8'}</dd></div>
+      <div>
+        <dt>{l s='Payment methods' mod='billwerksubscription'}</dt>
+        <dd>{if $data['payment_method_added'] && isset($data['payment_method'])}{$data['payment_method']['masked_card']|escape:'html':'UTF-8'}{else}-{/if}</dd>
+      </div>
+    </dl>
 
-{capture name=path}
-    <a href="{$link->getPageLink('my-account', true)|escape:'html':'UTF-8'}">
-        {l s='My account'}
-    </a>
-    <a href="{$data['my-subscription-page']|escape:'html':'UTF-8'}">
-        {l s='My Subscriptions'}
-    </a>
-    <a href="{$data['my-subscription-link']|escape:'html':'UTF-8'}">
-        {l s={$data['handle']}}
-    </a>
-{/capture}
-
-<div class="block-center" id="block-history">
-    {if $data['error']}
-        <p class="alert alert-warning">{l s='Subscription not found'}</p>
-    {/if}
-
-    <table id="order-list" class="table table-bordered footab" style="width: 50%">
-        <tr>
-            <td> <label> {l s='Status'} </label> </td>
-            <td> {$data['state_name']}</td>
-        </tr>
-        <tr>
-            <td> <label>{l s='Plan'} </label> </td>
-            <td> {$data['plan']} {if $data['in_trial'] && $data['state'] == 'active'} &nbsp; <b>[Trial period is active]</b> {/if}  </td>
-        </tr>
-
-        {if $data['in_trial'] && $data['state'] == 'active'}
-            <tr>
-                <td> <label> {l s='Trial period start'} </label> </td>
-                <td> {$data['trial_start']} </td>
-            </tr>
-            <tr>
-                <td> <label> {l s='Trial period end'} </label> </td>
-                <td> {$data['trial_end']} </td>
-            </tr>
+    <form method="POST" action="{$data['manage_subscription_link']|escape:'html':'UTF-8'}" class="bws-actions">
+      <input type="hidden" name="handle" value="{$data['handle']|escape:'html':'UTF-8'}">
+      {if $data['state'] == 'active'}
+        {if $data['enable_on_hold'] && $data['in_trial'] == false}
+          <button type="submit" name="action" value="pause" class="btn btn-outline-primary btn-sm">{l s='Pause' mod='billwerksubscription'}</button>
         {/if}
-
-        <tr>
-            <td> <label>{l s='Start Payment date'}</label> </td>
-            <td> {$data['first_period_start']} </td>
-        </tr>
-        <tr>
-            <td> <label>{l s='Last Payment date'}</label> </td>
-            <td> {$data['current_period_start']} </td>
-        </tr>
-        <tr>
-            <td> <label>{l s='Next Payment date'}</label> </td>
-            <td> {$data['next_period_start']} </td>
-        </tr>
-        <tr>
-            <td> <label>{l s='Payment methods'}</label> </td>
-            <td>  </td>
-        </tr>
-
-        {if $data['payment_method_added']}
-            <tr>
-                <td> {$data['payment_method']['masked_card']} </td>
-                <td> card </td>
-            </tr>
+        {if $data['enable_cancel']}
+          <button type="submit" name="action" value="cancel" class="btn btn-outline-danger btn-sm">{l s='Cancel' mod='billwerksubscription'}</button>
         {/if}
-
-        <tr>
-            <td> <label>{l s='Action'}</label> </td>
-            {if $data['state'] == 'active' }
-                <form method="POST" action="{$data['manage_subscription_link']}">
-                        <input type="hidden" name="handle" value="{$data['handle']}">
-                        <td>
-
-                            {if $data['enable_on_hold'] && $data['in_trial'] == false}
-                                <div class="form-group" style="float:left;">
-                                        <button type="submit" name="action" value="pause" class="btn btn-default button button-small">
-                                            <span>{l s='Pause'}</span>
-                                        </button>
-                                </div>
-                            {/if}
-
-                            {if $data['enable_cancel'] }
-                                <div class="form-group" style="float:left; margin-left: 5px;">
-                                            <button type="submit" name="action" value="cancel" class="btn btn-default button button-small">
-                                                <span>{l s='Cancel'}</span>
-                                            </button>
-                                </div>
-                            {/if}
-                                <div class="form-group" style="float:left; margin-left: 5px;">
-                                        <button type="submit" name="action" value="change-payment" class="btn btn-default button button-small">
-                                            <span>{l s='Change Payment'}</span>
-                                        </button>
-                                </div>
-                        </td>
-                </form>
-            {/if}
-            {if $data['state'] == 'pending' }
-                <form method="POST" action="{$data['manage_subscription_link']}">
-                    <input type="hidden" name="handle" value="{$data['handle']}">
-                    <td>
-                        <div class="form-group" style="float:left; margin-left: 5px;">
-                            <button type="submit" name="action" value="add-payment" class="btn btn-default button button-small">
-                                <span>{l s='Add Payment'}</span>
-                            </button>
-                        </div>
-                    </td>
-                </form>
-            {/if}
-
-            {if $data['state'] == 'on_hold'}
-                <form method="POST" action="{$data['manage_subscription_link']}">
-                    <input type="hidden" name="handle" value="{$data['handle']}">
-                    <td>
-                        <div class="form-group" style="float:left; margin-left: 5px;">
-                            <button type="submit" name="action" value="activate" class="btn btn-default button button-small">
-                                <span>{l s='Activate'}</span>
-                            </button>
-                        </div>
-                    </td>
-                </form>
-            {/if}
-
-            {if $data['state'] == 'cancelled'}
-                <form method="POST" action="{$data['manage_subscription_link']}">
-                    <input type="hidden" name="handle" value="{$data['handle']}">
-                    <td>
-                        <div class="form-group" style="float:left; margin-left: 5px;">
-                            <button type="submit" name="action" value="uncancel" class="btn btn-default button button-small">
-                                <span>{l s='Restart'}</span>
-                            </button>
-                        </div>
-                    </td>
-                </form>
-            {/if}
-        </tr>
-    </table>
-
-</div>
+        <button type="submit" name="action" value="change-payment" class="btn btn-primary btn-sm">{l s='Change Payment' mod='billwerksubscription'}</button>
+      {elseif $data['state'] == 'pending'}
+        <button type="submit" name="action" value="add-payment" class="btn btn-primary btn-sm">{l s='Add Payment' mod='billwerksubscription'}</button>
+      {elseif $data['state'] == 'on_hold'}
+        <button type="submit" name="action" value="activate" class="btn btn-primary btn-sm">{l s='Activate' mod='billwerksubscription'}</button>
+      {elseif $data['state'] == 'cancelled'}
+        <button type="submit" name="action" value="uncancel" class="btn btn-primary btn-sm">{l s='Restart' mod='billwerksubscription'}</button>
+      {/if}
+    </form>
+  </div>
+{/block}

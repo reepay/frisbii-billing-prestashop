@@ -106,6 +106,6 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
         }
 
         $this->context->smarty->assign(['data' => $data]);
-        $this->setTemplate('subscription.tpl');
+        $this->setTemplate('module:billwerksubscription/views/templates/front/subscription.tpl');
     }
 }

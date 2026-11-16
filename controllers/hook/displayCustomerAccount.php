@@ -17,7 +17,10 @@ class BillwerksubscriptionDisplayCustomerAccountController
         }
 
         $url = $this->context->link->getModuleLink('billwerksubscription', 'my-subscriptions');
-        $this->context->smarty->assign(['my_subscriptions_page' => $url]);
+        $this->context->smarty->assign([
+            'my_subscriptions_page' => $url,
+            'bws_is_current' => 'my-subscriptions' === Tools::getValue('controller'),
+        ]);
 
         return $this->module->display($this->file, 'hookDisplayCustomerAccount.tpl');
     }
