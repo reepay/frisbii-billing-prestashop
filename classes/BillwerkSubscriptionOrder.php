@@ -48,4 +48,20 @@ class BillwerkSubscriptionOrder extends ObjectModel
 
         return Db::getInstance()->getRow($query);
     }
+
+    /**
+     * RSCC-002: true when this invoice handle was already used for an order, so a repeated
+     * (or replayed) webhook event does not create a second order for it.
+     */
+    public static function existsByInvoiceHandle($inv_handle)
+    {
+        if (!is_string($inv_handle) || $inv_handle === '') {
+            return false;
+        }
+        $query = new DbQuery();
+        $query->from(self::TABLE_NAME);
+        $query->where('`inv_handle` = "'.pSQL($inv_handle).'"');
+
+        return (bool) Db::getInstance()->getRow($query);
+    }
 }
