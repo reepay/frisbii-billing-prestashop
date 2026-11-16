@@ -1,6 +1,7 @@
 <?php
 
 include_once _PS_MODULE_DIR_.'billwerksubscription/classes/BillwerkConfirmationGuard.php';
+include_once _PS_MODULE_DIR_.'billwerksubscription/classes/BillwerkChargeAmount.php';
 
 class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontControllerCore
 {
@@ -32,6 +33,22 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 || !BillwerkConfirmationGuard::isPaidInvoice($invoice, $cart->id)
                 || !BillwerkConfirmationGuard::ownsCart($session_customer_id, $cart->id_customer)) {
                 $this->backToCheckout();
+            }
+
+            // The cart must still need exactly what was paid (FP-34)
+            $cart_currency = new Currency((int) $cart->id_currency);
+            if (!BillwerkConfirmationGuard::amountMatches(
+                $invoice['amount'] ?? null,
+                BillwerkChargeAmount::forCart($cart),
+                $invoice['currency'] ?? null,
+                $cart_currency->iso_code
+            )) {
+                $this->refuse($cart, 'paid amount or currency does not match the cart', function () use ($invoice, $cart) {
+                    // An authorized charge is released; a settled one is refunded in full
+                    return 'settled' === $invoice['state']
+                        ? BillwerkPlusApi::refundInvoice((string) $cart->id)
+                        : BillwerkPlusApi::cancelCharge((string) $cart->id);
+                });
             }
 
             $product = $this->module->getSubscriptionProduct($cart);
@@ -72,10 +89,22 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 $this->backToCheckout();
             }
 
-            $customer = new Customer($cart->id_customer);
-            $shop_id = Context::getContext()->shop->id;
+            // The cart must still hold only the subscription product the session was created for (FP-34)
             $products = $cart->getProducts();
             $product = current($products);
+            if (!BillwerkConfirmationGuard::isCartUnchangedForSubscription(
+                $products,
+                $product ? BillwerkSubscriptionProduct::getByShopProductId($product['id_product'], $cart->id_shop) : null,
+                $subscription
+            )) {
+                $this->refuse($cart, 'the cart changed after the subscription session was created', function () use ($sub_handle) {
+                    // Ends the subscription now and refunds what was paid for it
+                    return BillwerkPlusApi::expireSubscription($sub_handle, 'full_refund');
+                });
+            }
+
+            $customer = new Customer($cart->id_customer);
+            $shop_id = Context::getContext()->shop->id;
             if (!BillwerkSubscriptionSubscriptions::getById($sub_handle)) {
                 BillwerkSubscriptionSubscriptions::saveSubscription($shop_id, $cart->id, $product['id_product'],
                     $subscription['handle'], $subscription['plan'], $subscription['customer'], $customer->id);
@@ -98,6 +127,34 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
             (int) $this->module->id.'&id_order='.
             (int) Order::getIdByCartId((int) $cart->id).'&key='.
             $customer->secure_key);
+    }
+
+    /**
+     * Log why an order was refused, cancel the payment at Frisbii, then send the customer back to the checkout.
+     * The payment is the customer's own (owner and invoice were checked first), so it is released or refunded.
+     *
+     * @param callable|null $undo returns the Frisbii API answer of the cancel or refund call
+     */
+    private function refuse($cart, $reason, $undo = null)
+    {
+        // Never undo a payment that already has an order
+        if (null !== $undo && !$cart->orderExists()) {
+            $answer = $undo();
+            $code = (int) ($answer['code'] ?? 0);
+            $reason .= 200 === $code
+                ? '. The payment was cancelled or refunded at Frisbii'
+                : sprintf('. The payment could NOT be cancelled at Frisbii (HTTP %d): cancel or refund it by hand', $code);
+        }
+
+        PrestaShopLogger::addLog(
+            sprintf('Frisbii Subscription: order refused for cart %d: %s', (int) $cart->id, $reason),
+            3,
+            null,
+            'Cart',
+            (int) $cart->id,
+            true
+        );
+        $this->backToCheckout();
     }
 
     private function backToCheckout()

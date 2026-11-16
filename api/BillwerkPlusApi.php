@@ -199,6 +199,48 @@ class BillwerkPlusApi
         return self::handleResponse($ch);
     }
 
+    /**
+     * End a subscription now and refund what was paid for it (used when an order is refused after payment, FP-34).
+     */
+    public static function expireSubscription($handle, $compensationMethod = 'full_refund')
+    {
+        $ch = self::curlSession();
+        $dataJson = json_encode(['compensation_method' => $compensationMethod]);
+        curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/expire");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataJson);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: '.Tools::strlen($dataJson)]);
+
+        return self::handleResponse($ch);
+    }
+
+    /**
+     * Release an authorized charge (FP-34).
+     */
+    public static function cancelCharge($handle)
+    {
+        $ch = self::curlSession();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/charge/'.rawurlencode($handle).'/cancel');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        return self::handleResponse($ch);
+    }
+
+    /**
+     * Refund the whole amount of a settled invoice (FP-34).
+     */
+    public static function refundInvoice($handle)
+    {
+        $ch = self::curlSession();
+        $dataJson = json_encode(['invoice' => (string) $handle]);
+        curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/refund');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataJson);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: '.Tools::strlen($dataJson)]);
+
+        return self::handleResponse($ch);
+    }
+
     public static function getWebhookSettings()
     {
         $ch = self::curlSession();
