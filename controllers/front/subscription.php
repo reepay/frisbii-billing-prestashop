@@ -15,9 +15,8 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
 
         $sub_handle = Tools::getValue('h');
 
-        $subscription = BillwerkSubscriptionSubscriptions::getById($sub_handle);
-
-        if (!$subscription) {
+        // RSCC-001: only a plain handle may reach the database.
+        if (!BillwerkSubscriptionSubscriptions::isValidHandle($sub_handle)) {
             Tools::redirect(Context::getContext()->link->getPageLink('my-account', true, Context::getContext()->language->id, null, false, $id_shop));
         }
 

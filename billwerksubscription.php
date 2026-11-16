@@ -253,6 +253,11 @@ class BillwerkSubscription extends PaymentModule
 
     public function WebhookRenewSubscriptionOrder($params)
     {
+        // RSCC-001: the handle comes from the webhook body; stop on anything that is not a plain handle.
+        if (!isset($params['subscription']) || !BillwerkSubscriptionSubscriptions::isValidHandle($params['subscription'])) {
+            return;
+        }
+
         $res = BillwerkSubscriptionSubscriptions::getById($params['subscription']);
 
         if ($res) {
