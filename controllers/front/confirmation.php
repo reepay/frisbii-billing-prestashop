@@ -15,8 +15,12 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
 
         $order_type = Tools::getValue('t');
         $session_customer_id = (int) $this->context->customer->id;
-        if (!in_array($order_type, ['ch', 's'], true) || !$this->context->customer->isLogged()) {
+        if (!in_array($order_type, ['ch', 's'], true)) {
             $this->backToCheckout();
+        }
+        if (!$this->context->customer->isLogged()) {
+            // The customer may already have paid: resume this confirmation after login, never drop it
+            $this->loginAndReturn($order_type);
         }
 
         if ('ch' == $order_type) {
@@ -43,12 +47,7 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 $invoice['currency'] ?? null,
                 $cart_currency->iso_code
             )) {
-                $this->refuse($cart, 'paid amount or currency does not match the cart', function () use ($invoice, $cart) {
-                    // An authorized charge is released; a settled one is refunded in full
-                    return 'settled' === $invoice['state']
-                        ? BillwerkPlusApi::refundInvoice((string) $cart->id)
-                        : BillwerkPlusApi::cancelCharge((string) $cart->id);
-                });
+                $this->refuse($cart, 'paid amount or currency does not match the cart', $this->undoChargeCallback($invoice, $cart));
             }
 
             $product = $this->module->getSubscriptionProduct($cart);
@@ -58,7 +57,8 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 $customer_handle = 'cust-'.$customer->id;
                 $source = $this->getVerifiedPaymentMethod(Tools::getValue('payment_method'), $customer_handle);
                 if (null === $source) {
-                    $this->backToCheckout();
+                    // The charge is paid and owned by this customer, so release it instead of keeping it
+                    $this->refuse($cart, 'the payment method could not be verified', $this->undoChargeCallback($invoice, $cart));
                 }
 
                 $data['handle'] = $sub_handle;
@@ -155,6 +155,40 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
             true
         );
         $this->backToCheckout();
+    }
+
+    /**
+     * An authorized charge is released; a settled one is refunded in full.
+     *
+     * @return callable
+     */
+    private function undoChargeCallback($invoice, $cart)
+    {
+        return function () use ($invoice, $cart) {
+            if ('settled' === $invoice['state']) {
+                return BillwerkPlusApi::refundInvoice((string) $cart->id);
+            }
+
+            return BillwerkPlusApi::cancelCharge((string) $cart->id);
+        };
+    }
+
+    /**
+     * Send a logged-out customer to the login page and bring them back to this same confirmation.
+     * Ownership is checked after login, so nothing is refunded or ordered for an unknown session.
+     */
+    private function loginAndReturn($order_type)
+    {
+        $query = ['t' => $order_type];
+        foreach (['invoice', 'subscription', 'payment_method'] as $key) {
+            $value = Tools::getValue($key);
+            if (is_string($value) && preg_match('/^[A-Za-z0-9_-]{1,64}$/D', $value)) {
+                $query[$key] = $value;
+            }
+        }
+
+        $back = $this->context->link->getModuleLink('billwerksubscription', 'confirmation', $query, true);
+        Tools::redirect($this->context->link->getPageLink('authentication', true, null, ['back' => $back]));
     }
 
     private function backToCheckout()

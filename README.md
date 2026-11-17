@@ -31,4 +31,5 @@ You can create issues on our repository. In case of specific problems with your 
 
 ## Changelog
 v 1.1.3
-- [Fix] - Payment improvements.
+- [Fix] - Payment improvements
+- [Fix] - Fixed the broken styling of the My Subscription menu (My account page)

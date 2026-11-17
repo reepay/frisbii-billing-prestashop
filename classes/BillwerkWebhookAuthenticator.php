@@ -27,7 +27,12 @@ class BillwerkWebhookAuthenticator
     /** Correctly signed, but the timestamp is outside the freshness window (captured/replayed triple). */
     const RESULT_STALE = 'stale';
 
-    const DEFAULT_TOLERANCE_SECONDS = 900;
+    /**
+     * Frisbii signs the original event time and retries after 20 min, 30 min, then hourly, so a retry
+     * is always older than a short window. 24 h keeps retries working; replays are still stopped by
+     * the per-invoice check in WebhookRenewSubscriptionOrder().
+     */
+    const DEFAULT_TOLERANCE_SECONDS = 86400;
 
     /** @var BillwerkWebhookSecretManager */
     private $secretManager;
