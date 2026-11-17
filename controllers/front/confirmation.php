@@ -103,6 +103,11 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                 });
             }
 
+            // "active" is also true for a trial or a subscription in dunning: a payment must be settled (FP-34)
+            if (!BillwerkConfirmationGuard::hasSettledPayment($subscription)) {
+                $this->refuse($cart, 'the subscription has no settled payment (trial, dunning or unpaid)');
+            }
+
             $customer = new Customer($cart->id_customer);
             $shop_id = Context::getContext()->shop->id;
             if (!BillwerkSubscriptionSubscriptions::getById($sub_handle)) {
@@ -110,6 +115,9 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
                     $subscription['handle'], $subscription['plan'], $subscription['customer'], $customer->id);
             }
         }
+
+        // The cart owner was checked above and equals the session customer: only their own key is ever used (FP-34)
+        $customer = $this->context->customer;
 
         // order hasn't been placed with webhook yet
         if (!$cart->orderExists()) {

@@ -67,6 +67,21 @@ class BillwerkConfirmationGuard
             && 0 === strcasecmp($invoiceCurrency, $cartCurrency);
     }
 
+    /**
+     * True when Frisbii shows a real payment for the subscription: not in trial, not in dunning,
+     * and at least one settled invoice. A missing field counts as "not paid" (fail closed).
+     *
+     * @param array|null $subscription Frisbii subscription (needs in_trial, dunning_invoices, settled_invoices)
+     */
+    public static function hasSettledPayment($subscription)
+    {
+        return is_array($subscription)
+            && isset($subscription['in_trial'], $subscription['dunning_invoices'], $subscription['settled_invoices'])
+            && false === $subscription['in_trial']
+            && is_int($subscription['dunning_invoices']) && 0 === $subscription['dunning_invoices']
+            && is_int($subscription['settled_invoices']) && $subscription['settled_invoices'] >= 1;
+    }
+
     public static function isSubscriptionOf($subscription, $subHandle, $customerHandle)
     {
         return is_array($subscription)
