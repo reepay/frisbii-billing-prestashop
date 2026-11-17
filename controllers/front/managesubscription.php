@@ -100,7 +100,7 @@ class BillwerkSubscriptionManageSubscriptionModuleFrontController extends Module
 
     private static function originKey($handle)
     {
-        return 'BWS_ORIGIN_'.$handle; // handle is sub-<digits> here
+        return BillwerkManageGuard::originKey($handle); // handle is sub-<digits> here
     }
 
     private function rememberOrigin($handle, $origin)

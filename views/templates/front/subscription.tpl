@@ -56,9 +56,17 @@
       {elseif $data['state'] == 'pending'}
         <button type="submit" name="action" value="add-payment" class="btn btn-primary btn-sm">{l s='Add Payment' mod='billwerksubscription'}</button>
       {elseif $data['state'] == 'on_hold'}
-        <button type="submit" name="action" value="activate" class="btn btn-primary btn-sm">{l s='Activate' mod='billwerksubscription'}</button>
+        {if $data['can_undo']}
+          <button type="submit" name="action" value="activate" class="btn btn-primary btn-sm">{l s='Activate' mod='billwerksubscription'}</button>
+        {else}
+          <p class="mb-0">{l s='This subscription was put on hold by the shop. Please contact the shop to activate it.' mod='billwerksubscription'}</p>
+        {/if}
       {elseif $data['state'] == 'cancelled'}
-        <button type="submit" name="action" value="uncancel" class="btn btn-primary btn-sm">{l s='Restart' mod='billwerksubscription'}</button>
+        {if $data['can_undo']}
+          <button type="submit" name="action" value="uncancel" class="btn btn-primary btn-sm">{l s='Restart' mod='billwerksubscription'}</button>
+        {else}
+          <p class="mb-0">{l s='This subscription was cancelled by the shop. Please contact the shop to restart it.' mod='billwerksubscription'}</p>
+        {/if}
       {/if}
     </form>
   </div>

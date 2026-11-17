@@ -1,5 +1,7 @@
 <?php
 
+include_once _PS_MODULE_DIR_.'billwerksubscription/classes/BillwerkManageGuard.php';
+
 class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontControllerCore
 {
     public $display_column_left = false;
@@ -79,6 +81,12 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
         $data['enable_on_hold'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD');
         $data['enable_cancel'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL');
         $data['in_trial'] = $subscription['in_trial'];
+        // Activate and Restart only when the customer started the hold or cancel; older ones are the shop's to undo
+        $data['can_undo'] = BillwerkManageGuard::canUndo(
+            $subscription['state'],
+            $subscription['is_cancelled'],
+            Configuration::get(BillwerkManageGuard::originKey($sub_handle))
+        );
 
         if ($subscription['in_trial']) {
             $data['trial_start'] = $subscription['trial_start'];

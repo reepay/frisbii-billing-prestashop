@@ -105,7 +105,11 @@ class BillwerkSubscriptionConfirmationModuleFrontController extends ModuleFrontC
 
             // "active" is also true for a trial or a subscription in dunning: a payment must be settled (FP-34)
             if (!BillwerkConfirmationGuard::hasSettledPayment($subscription)) {
-                $this->refuse($cart, 'the subscription has no settled payment (trial, dunning or unpaid)');
+                // No order is made, so the live subscription must end too: it would bill later (end of trial) and
+                // the customer could not start again (the handle is built from the cart id)
+                $this->refuse($cart, 'the subscription has no settled payment (trial, dunning or unpaid)', function () use ($sub_handle) {
+                    return BillwerkPlusApi::expireSubscription($sub_handle, 'full_refund');
+                });
             }
 
             $customer = new Customer($cart->id_customer);

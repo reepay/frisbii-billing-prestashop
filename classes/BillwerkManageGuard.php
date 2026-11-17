@@ -11,6 +11,30 @@ class BillwerkManageGuard
     const ORIGIN_HOLD = 'on_hold';
     const ORIGIN_CANCEL = 'cancelled';
 
+    /** Configuration key that holds the origin of the current hold or cancel of a subscription (handle is sub-<digits>). */
+    public static function originKey($handle)
+    {
+        return 'BWS_ORIGIN_'.$handle;
+    }
+
+    /**
+     * True when the customer may undo the current hold (state on_hold) or cancel (is_cancelled):
+     * only when the customer started it in this shop. A hold or cancel made before FP-35 has no origin,
+     * so the page must not offer the button (the server would refuse it).
+     *
+     * @param string $state Frisbii state of the subscription
+     * @param bool $cancelled Frisbii is_cancelled
+     * @param string|null $origin stored ORIGIN_* value
+     */
+    public static function canUndo($state, $cancelled, $origin)
+    {
+        if (true === $cancelled) {
+            return self::ORIGIN_CANCEL === $origin;
+        }
+
+        return 'on_hold' === $state && self::ORIGIN_HOLD === $origin;
+    }
+
     public static function isKnownAction($action)
     {
         return is_string($action) && in_array($action, self::ACTIONS, true);
