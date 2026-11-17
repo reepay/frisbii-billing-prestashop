@@ -12,13 +12,16 @@ require_once __DIR__.'/classes/BillwerkSubscriptionProduct.php';
 require_once __DIR__.'/classes/BillwerkSubscriptionSubscriptions.php';
 require_once __DIR__.'/classes/BillwerkSubscriptionPlanHelper.php';
 require_once __DIR__.'/classes/BillwerkSubscriptionOrder.php';
+require_once __DIR__.'/classes/BillwerkWebhookSignatureVerifier.php';
+require_once __DIR__.'/classes/BillwerkWebhookSecretManager.php';
+require_once __DIR__.'/classes/BillwerkWebhookAuthenticator.php';
 class BillwerkSubscription extends PaymentModule
 {
     public function __construct()
     {
         $this->name = 'billwerksubscription';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.2';
+        $this->version = '1.1.3';
         $this->author = 'Frisbii';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
@@ -90,6 +93,7 @@ class BillwerkSubscription extends PaymentModule
             'payment',
             'displayPayment',
             'displayBeforePayment',
+            'paymentOptions',
             'displayHeader',
             'displayProductContent',
             'displayCustomerAccount',
@@ -133,9 +137,37 @@ class BillwerkSubscription extends PaymentModule
         return $controller->run($params);
     }
 
+    /**
+     * PrestaShop 1.7+/8/9 checkout only renders options returned here (the legacy payment hooks are
+     * not called). Shown only for carts that contain a subscription product. Posts straight to the
+     * validation controller, which opens the Frisbii hosted page.
+     */
+    public function hookPaymentOptions($params)
+    {
+        if (!Configuration::get('BILLWERKSUBSCRIPTION_ENABLED') || !$this->active) {
+            return [];
+        }
+        if (!isset($params['cart']) || !($params['cart'] instanceof Cart) || !$this->cartHasSubscriptionProducts($params['cart'])) {
+            return [];
+        }
+
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setModuleName($this->name)
+            ->setCallToActionText($this->l('Pay with Frisbii subscription'))
+            ->setAction($this->context->link->getModuleLink($this->name, 'validation', [], true))
+            ->setInputs(['is_submit' => ['name' => 'is_submit', 'type' => 'hidden', 'value' => '1']])
+            ->setAdditionalInformation($this->l('You will be redirected to the Frisbii payment window. After payment you return to the shop.'));
+
+        return [$option];
+    }
+
     public function hookDisplayHeader($params)
     {
-        $this->context->controller->addCSS($this->_path.'/views/css/styles.css');
+        $this->context->controller->registerStylesheet(
+            'module-billwerksubscription-styles',
+            'modules/'.$this->name.'/views/css/styles.css',
+            ['media' => 'all', 'priority' => 150]
+        );
     }
 
     public function hookDisplayProductPriceBlock($params)
@@ -251,8 +283,86 @@ class BillwerkSubscription extends PaymentModule
         return BillwerkPlusApi::createSubscription($data);
     }
 
+    /**
+     * RSCC-002: builds a BillwerkWebhookAuthenticator wired to the real Frisbii API and Configuration.
+     */
+    public function getWebhookSecretManager()
+    {
+        $fetcher = function () {
+            $result = BillwerkPlusApi::getWebhookSettings();
+            if (!isset($result['response']) || empty($result['response']['secret'])) {
+                return null;
+            }
+
+            return $result['response']['secret'];
+        };
+
+        return new BillwerkWebhookSecretManager(
+            $fetcher,
+            function ($key) {
+                return Configuration::get($key);
+            },
+            function ($key, $value) {
+                Configuration::updateValue($key, $value);
+            },
+            function ($key) {
+                Configuration::deleteByName($key);
+            }
+        );
+    }
+
+    public function getWebhookAuthenticator()
+    {
+        $tolerance = Configuration::get('BILLWERKSUBSCRIPTION_WEBHOOK_TOLERANCE');
+
+        return new BillwerkWebhookAuthenticator(
+            $this->getWebhookSecretManager(),
+            ($tolerance === false || $tolerance === '' || $tolerance === null)
+                ? BillwerkWebhookAuthenticator::DEFAULT_TOLERANCE_SECONDS
+                : (int) $tolerance
+        );
+    }
+
     public function WebhookRenewSubscriptionOrder($params)
     {
+        // RSCC-001: the handle comes from the webhook body; stop on anything that is not a plain handle.
+        if (!isset($params['subscription']) || !BillwerkSubscriptionSubscriptions::isValidHandle($params['subscription'])) {
+            return;
+        }
+
+        // RSCC-002: an event must name an invoice, that invoice must be settled, and it must belong
+        // to this subscription — otherwise anyone who can reach the webhook (or a captured event
+        // replayed later) could get a free renewal order. See task.md TECH DETAILS: getInvoice()'s
+        // exact response shape for a subscription renewal was not confirmed against a real invoice.
+        if (!isset($params['invoice']) || !is_string($params['invoice']) || $params['invoice'] === '') {
+            PrestaShopLogger::addLog('Webhook renewal rejected: event for subscription '.$params['subscription'].' has no invoice handle.', 2, '0000002');
+
+            return;
+        }
+        $inv_handle = $params['invoice'];
+
+        // RSCC-002: the same invoice must not create a second order (Frisbii retry, or a replay).
+        if (BillwerkSubscriptionOrder::existsByInvoiceHandle($inv_handle)) {
+            PrestaShopLogger::addLog('Webhook renewal rejected: invoice '.$inv_handle.' was already used for an order.', 2, '0000002');
+
+            return;
+        }
+
+        $invoiceResult = BillwerkPlusApi::getInvoice($inv_handle);
+        $invoice = isset($invoiceResult['response']) && is_array($invoiceResult['response']) ? $invoiceResult['response'] : null;
+
+        if ($invoice === null || empty($invoice['state']) || $invoice['state'] !== 'settled') {
+            PrestaShopLogger::addLog('Webhook renewal rejected: invoice '.$inv_handle.' could not be verified as settled.', 2, '0000002');
+
+            return;
+        }
+
+        if (!isset($invoice['subscription']) || $invoice['subscription'] !== $params['subscription']) {
+            PrestaShopLogger::addLog('Webhook renewal rejected: invoice '.$inv_handle.' does not belong to subscription '.$params['subscription'].'.', 2, '0000002');
+
+            return;
+        }
+
         $res = BillwerkSubscriptionSubscriptions::getById($params['subscription']);
 
         if ($res) {
@@ -261,7 +371,7 @@ class BillwerkSubscription extends PaymentModule
             $result = $cart->duplicate();
             if (!$result['success']) { // seems like product is run out
                 $message = "Can't duplicate a cart during creation of a subscription renewal order.";
-                $message .= 'Event payload: '.json_encode($params);
+                $message .= 'Subscription: '.$params['subscription'].', invoice: '.$inv_handle;
                 PrestaShopLogger::addLog($message, 4, '0000002', 'Cart', $id_cart);
                 throw new CartException($message);
             }

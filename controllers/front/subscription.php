@@ -1,5 +1,7 @@
 <?php
 
+include_once _PS_MODULE_DIR_.'billwerksubscription/classes/BillwerkManageGuard.php';
+
 class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontControllerCore
 {
     public $display_column_left = false;
@@ -15,9 +17,8 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
 
         $sub_handle = Tools::getValue('h');
 
-        $subscription = BillwerkSubscriptionSubscriptions::getById($sub_handle);
-
-        if (!$subscription) {
+        // RSCC-001: only a plain handle may reach the database.
+        if (!BillwerkSubscriptionSubscriptions::isValidHandle($sub_handle)) {
             Tools::redirect(Context::getContext()->link->getPageLink('my-account', true, Context::getContext()->language->id, null, false, $id_shop));
         }
 
@@ -75,9 +76,17 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
             $data['error'] = false;
         }
 
+        // FP-35: the action form must carry this token
+        $data['token'] = Tools::getToken('bws-manage-subscription');
         $data['enable_on_hold'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD');
         $data['enable_cancel'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL');
         $data['in_trial'] = $subscription['in_trial'];
+        // Activate and Restart only when the customer started the hold or cancel; older ones are the shop's to undo
+        $data['can_undo'] = BillwerkManageGuard::canUndo(
+            $subscription['state'],
+            $subscription['is_cancelled'],
+            Configuration::get(BillwerkManageGuard::originKey($sub_handle))
+        );
 
         if ($subscription['in_trial']) {
             $data['trial_start'] = $subscription['trial_start'];
@@ -107,6 +116,6 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
         }
 
         $this->context->smarty->assign(['data' => $data]);
-        $this->setTemplate('subscription.tpl');
+        $this->setTemplate('module:billwerksubscription/views/templates/front/subscription.tpl');
     }
 }

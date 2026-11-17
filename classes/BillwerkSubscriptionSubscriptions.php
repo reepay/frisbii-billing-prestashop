@@ -27,11 +27,23 @@ class BillwerkSubscriptionSubscriptions extends ObjectModel
         ],
     ];
 
+    /**
+     * RSCC-001: a subscription handle is "sub-" followed by digits. Anything else must never reach a query.
+     *
+     * @param mixed $handle
+     *
+     * @return bool
+     */
+    public static function isValidHandle($handle)
+    {
+        return is_string($handle) && 1 === preg_match('/^sub-[0-9]+$/D', $handle);
+    }
+
     public static function getById($sub_handle)
     {
         $query = new DbQuery();
         $query->from('billwerksubscription_subscriptions');
-        $query->where('`sub_handle` = "'.$sub_handle.'"');
+        $query->where('`sub_handle` = "'.pSQL((string) $sub_handle).'"');
 
         return Db::getInstance()->getRow($query);
     }
@@ -40,8 +52,8 @@ class BillwerkSubscriptionSubscriptions extends ObjectModel
     {
         $query = new DbQuery();
         $query->from('billwerksubscription_subscriptions');
-        $query->where('`id_shop` = '.$id_shop);
-        $query->where('`presta_customer_id` = '.$presta_customer_id);
+        $query->where('`id_shop` = '.(int) $id_shop);
+        $query->where('`presta_customer_id` = '.(int) $presta_customer_id);
 
         return Db::getInstance()->query($query)->fetchAll();
     }
@@ -50,8 +62,8 @@ class BillwerkSubscriptionSubscriptions extends ObjectModel
     {
         $query = new DbQuery();
         $query->from('billwerksubscription_subscriptions');
-        $query->where('`id_shop` = '.$id_shop);
-        $query->where('`id_product` = '.$id_product);
+        $query->where('`id_shop` = '.(int) $id_shop);
+        $query->where('`id_product` = '.(int) $id_product);
 
         return Db::getInstance()->query($query)->fetchAll();
     }

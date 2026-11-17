@@ -18,17 +18,31 @@ class billwerksubscriptionPaymentReturnController
             exit("Frisbii Subscription Payment's not enabled");
         }
 
-        if (PS_1_6) {
-            $order = $params['objOrder'];
-        } elseif (PS_1_7) {
+        // PS 1.6 passes objOrder; PS 1.7/8/9 pass order. Do not depend on constants defined by other modules.
+        $order = null;
+        if (isset($params['order'])) {
             $order = $params['order'];
+        } elseif (isset($params['objOrder'])) {
+            $order = $params['objOrder'];
+        }
+        if (!Validate::isLoadedObject($order)) {
+            return '';
+        }
+
+        $currency = new Currency((int) $order->id_currency);
+        $amount = isset($params['total_to_pay']) ? (float) $params['total_to_pay'] : (float) $order->getOrdersTotalPaid();
+        if (method_exists($this->context, 'getCurrentLocale') && $this->context->getCurrentLocale()) {
+            $total = $this->context->getCurrentLocale()->formatPrice($amount, $currency->iso_code);
+        } else {
+            $total = Tools::displayPrice($amount, $currency, false);
         }
 
         $this->context->smarty->assign([
             'id_order' => $order->id,
             'reference' => $order->reference,
             'params' => $params,
-            'total' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+            'total' => $total,
+            'shop_name' => $this->context->shop->name,
             'status' => 'ok',
         ]);
         return $this->module->display($this->file, 'hookPaymentConfirmation.tpl');

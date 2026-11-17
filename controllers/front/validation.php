@@ -1,5 +1,7 @@
 <?php
 
+include_once _PS_MODULE_DIR_.'billwerksubscription/classes/BillwerkChargeAmount.php';
+
 class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontControllerCore
 {
     public function postProcess()
@@ -40,8 +42,13 @@ class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontCon
 
         $cart = $this->context->cart;
 
-        if ($this->module->cartHasSubscriptionProducts($cart) && 1 == count($cart->getProducts())) {
-            // placing a regular subscription order
+        $products = $cart->getProducts();
+        if ($this->module->cartHasSubscriptionProducts($cart) && 1 == count($products)) {
+            // placing a regular subscription order: confirmation.php accepts only quantity 1 (FP-34)
+            if (1 !== (int) current($products)['cart_quantity']) {
+                $this->module->setFlashMessage('frisbii_checkout_error', 'A subscription product can only be ordered with quantity 1.');
+                Tools::redirect(Context::getContext()->link->getPageLink('cart', true, null, ['action' => 'show']));
+            }
             $response = $this->createSubscriptionSession($cart);
         } else {
             // placing a mixed order
@@ -55,7 +62,8 @@ class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontCon
                 PrestaShopLogger::addLOg('Subscription response params: '.print_r($response, true), 3);
             }
             $this->module->setFlashMessage('frisbii_checkout_error', 'Some error occurred.');
-            $url = Context::getContext()->link->getModuleLink('billwerksubscription', 'payment', [], true);
+            // The legacy payment page template does not exist in PS 1.7+/8/9: go back to the checkout.
+            $url = Context::getContext()->link->getPageLink('order', true, null, ['step' => 3]);
             Tools::redirect($url);
         }
     }
@@ -104,17 +112,8 @@ class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontCon
 
     public function createCheckoutSession($cart)
     {
-        $products = $cart->getProducts();
-        $non_subscription_products = [];
-        foreach ($products as $product) {
-            $subscription_product = BillwerkSubscriptionProduct::getByShopProductId($product['id_product'], $cart->id_shop);
-            if (!$subscription_product) {
-                $non_subscription_products[] = $product;
-            }
-        }
-        $order_total_without_subscription_product = $cart->getOrderTotal(true, Cart::BOTH, $non_subscription_products, true);
-        $shipping_cost = $cart->getTotalShippingCost();
-        $total = $order_total_without_subscription_product + $shipping_cost;
+        // Same calculation confirmation.php uses to check the paid amount (FP-34)
+        $amount = BillwerkChargeAmount::forCart($cart);
 
         $deliveryAddress = new Address(intval($cart->id_address_delivery));
         $billingAddress = new Address(intval($cart->id_address_invoice));
@@ -127,7 +126,7 @@ class BillwerkSubscriptionValidationModuleFrontController extends ModuleFrontCon
         $data = [
             'order' => [
                 'handle' => $cart->id,
-                'amount' => (float) $total * 100,
+                'amount' => $amount,
                 'currency' => $this->context->currency->iso_code,
                 'customer' => [
                     'email' => $customer->email,

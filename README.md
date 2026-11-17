@@ -1,5 +1,5 @@
 # Frisbii Subscription
-Lastest version: 1.1.2
+Lastest version: 1.1.3
 
 Frisbii for Prestashop for 8 and 9, connects your store to Frisbii's powerful recurring revenue management platform—bringing together subscriptions, automated billing, and payments in one seamless integration.
 
@@ -30,11 +30,6 @@ Whether you're running a subscription-first business or offering a mix of one-ti
 You can create issues on our repository. In case of specific problems with your account, please contact support@frisbii.com
 
 ## Changelog
-v 1.1.2
-- [Feature] - Subscription panel on the product page now auto-expands when a Frisbii plan is already assigned.
-- [Fix] - Increased max supported Prestashop version from 1.7.99 to 9.99.99, fixing install failure on 9.1.4.
-- [Fix] - Removed unrelated settings (API key, status, self-service, debug mode, Save button) from the embedded config form on the product page.
-- [Fix] - Fixed broken Frisbii Subscription layout styling on the product edit page.
-- [Fix] - Fixed subscription plans failing to load from Frisbii on the product form.
-- [Fix] - Fixed "array offset on int" warning in getContent.php when Frisbii Billing and Frisbii Pay are both enabled, caused by hardcoded language variables conflicting with HelperForm's own.
-- [Docs] - Updated Readme with detailed step-by-step installation guide for Prestashop.
+v 1.1.3
+- [Fix] - Payment improvements
+- [Fix] - Fixed the broken styling of the My Subscription menu (My account page)

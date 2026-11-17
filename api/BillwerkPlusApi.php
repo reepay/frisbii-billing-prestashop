@@ -21,8 +21,43 @@ class BillwerkPlusApi
         return $ch;
     }
 
+    /**
+     * A URL path or query value built from a handle or id (FP-32, FP-33). Accepts only letters,
+     * digits, "_", "-" and ".", up to 64 characters, never a value made only of dots and never
+     * "..". ("." and ".." are path steps that curl removes from the URL.) Anything else could change
+     * which object the URL points to or add a parameter, so it is refused.
+     *
+     * @return string|null null when the value must not be sent to Frisbii
+     */
+    protected static function segment($value)
+    {
+        if (!is_string($value) && !is_int($value)) {
+            return null;
+        }
+        $value = (string) $value;
+        if (1 !== preg_match('/^[A-Za-z0-9_.-]{1,64}$/D', $value)
+            || 1 === preg_match('/^\.+$/D', $value)
+            || false !== strpos($value, '..')) {
+            return null;
+        }
+
+        return rawurlencode($value);
+    }
+
+    /**
+     * What a wrapped (handleResponse()) call returns when segment() refused the handle:
+     * the same shape as a real Frisbii answer, so callers do not need a separate check.
+     */
+    protected static function rejected()
+    {
+        return ['response' => null, 'code' => 0];
+    }
+
     public static function getInvoice($invoiceId)
     {
+        if (null === ($invoiceId = self::segment($invoiceId))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/invoice/$invoiceId");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -32,6 +67,9 @@ class BillwerkPlusApi
 
     public static function getChargeSession($orderId)
     {
+        if (null === ($orderId = self::segment($orderId))) {
+            return null;
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/charge/'.$orderId);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -53,6 +91,9 @@ class BillwerkPlusApi
 
     public static function getSubscriptionPlan($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return null;
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/plan/{$handle}/current");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -109,6 +150,9 @@ class BillwerkPlusApi
 
     public static function getCustomer($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/customer/{$handle}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -118,6 +162,9 @@ class BillwerkPlusApi
 
     public static function getCustomerSubscriptions($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/list/subscription?customer={$handle}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -127,6 +174,9 @@ class BillwerkPlusApi
 
     public static function getByHandle($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -136,6 +186,9 @@ class BillwerkPlusApi
 
     public static function getPlan($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/plan/{$handle}/current");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -156,6 +209,9 @@ class BillwerkPlusApi
 
     public static function getSubscription($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -165,6 +221,9 @@ class BillwerkPlusApi
 
     public static function getPaymentMethod($payment_id)
     {
+        if (null === ($payment_id = self::segment($payment_id))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/payment_method/{$payment_id}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
@@ -174,6 +233,9 @@ class BillwerkPlusApi
 
     public static function pauseSubscription($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/on_hold");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
@@ -183,6 +245,9 @@ class BillwerkPlusApi
 
     public static function reactivateSubscription($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/reactivate");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
@@ -192,9 +257,63 @@ class BillwerkPlusApi
 
     public static function cancelSubscription($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/cancel");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        return self::handleResponse($ch);
+    }
+
+    /**
+     * End a subscription now and refund what was paid for it (used when an order is refused after payment, FP-34).
+     */
+    public static function expireSubscription($handle, $compensationMethod = 'full_refund')
+    {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
+        $ch = self::curlSession();
+        $dataJson = json_encode(['compensation_method' => $compensationMethod]);
+        curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/expire");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataJson);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: '.Tools::strlen($dataJson)]);
+
+        return self::handleResponse($ch);
+    }
+
+    /**
+     * Release an authorized charge (FP-34).
+     */
+    public static function cancelCharge($handle)
+    {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
+        $ch = self::curlSession();
+        curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/charge/'.$handle.'/cancel');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        return self::handleResponse($ch);
+    }
+
+    /**
+     * Refund the whole amount of a settled invoice (FP-34).
+     */
+    public static function refundInvoice($handle)
+    {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
+        $ch = self::curlSession();
+        $dataJson = json_encode(['invoice' => $handle]);
+        curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/refund');
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $dataJson);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: '.Tools::strlen($dataJson)]);
 
         return self::handleResponse($ch);
     }
@@ -229,6 +348,9 @@ class BillwerkPlusApi
 
     public static function uncancelSubscription($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
         curl_setopt($ch, CURLOPT_URL, "https://api.reepay.com/v1/subscription/{$handle}/uncancel");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');

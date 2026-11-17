@@ -22,7 +22,7 @@ class BillwerkSubscriptionMySubscriptionsModuleFrontController extends ModuleFro
         $planList = BillwerkPlusApi::getPlanList();
 
         $planData = [];
-        foreach ($planList['response']['content'] as $plan) {
+        foreach ((array) ($planList['response']['content'] ?? []) as $plan) {
             $planData[$plan['handle']] = ['name' => $plan['name'], 'amount' => $plan['amount'], 'currency' => $plan['currency']];
         }
         $api_subscriptions = $api_subscriptions['response'];
@@ -33,39 +33,41 @@ class BillwerkSubscriptionMySubscriptionsModuleFrontController extends ModuleFro
             $subscriptions_handles[] = $subscription['sub_handle'];
         }
 
-        if (true) {
-            foreach ($api_subscriptions['content'] as $api_subscription) {
-                if ('pending' == $api_subscription['state']) {
-                    continue;
-                }
-
-                if (!in_array($api_subscription['handle'], $subscriptions_handles)) {
-                    continue;
-                }
-
-                $subscription['state_name'] = $this->state_names[$api_subscription['state']];
-                if ($api_subscription['is_cancelled']) {
-                    $subscription['state_name'] = 'Cancelled';
-                }
-
-                // sub_handle
-                $subscription_link = $this->context->link->getModuleLink('billwerksubscription', 'subscription', ['h' => $api_subscription['handle']], true);
-                $subscription['subscription_link'] = $subscription_link;
-
-                $subscription['plan_name'] = $planData[$api_subscription['plan']]['name'];
-
-                $subscription['amount'] = $planData[$api_subscription['plan']]['amount'] / 100 .'&nbsp;'.$planData[$api_subscription['plan']]['currency'];
-
-                $dateTime = new DateTime($api_subscription['next_period_start']);
-
-                $subscription['next_billing'] = $dateTime->format('d M Y');
-                $subscription['sub_handle'] = $api_subscription['handle'];
-
-                $data[] = ['subscription' => $subscription];
+        foreach ((array) ($api_subscriptions['content'] ?? []) as $api_subscription) {
+            if ('pending' == $api_subscription['state']) {
+                continue;
             }
+
+            if (!in_array($api_subscription['handle'], $subscriptions_handles)) {
+                continue;
+            }
+
+            $subscription = [];
+            $subscription['state'] = $api_subscription['is_cancelled'] ? 'cancelled' : $api_subscription['state'];
+            $subscription['state_name'] = $this->state_names[$subscription['state']] ?? ucfirst(str_replace('_', ' ', $subscription['state']));
+
+            $subscription['subscription_link'] = $this->context->link->getModuleLink('billwerksubscription', 'subscription', ['h' => $api_subscription['handle']], true);
+
+            // The plan list only covers plans up to today; ask for a missing plan directly.
+            if (!isset($planData[$api_subscription['plan']])) {
+                $plan = BillwerkPlusApi::getSubscriptionPlan($api_subscription['plan']);
+                if (is_array($plan) && isset($plan['name'])) {
+                    $planData[$api_subscription['plan']] = ['name' => $plan['name'], 'amount' => $plan['amount'] ?? 0, 'currency' => $plan['currency'] ?? ''];
+                }
+            }
+            $plan = $planData[$api_subscription['plan']] ?? null;
+            $subscription['plan_name'] = $plan ? $plan['name'] : $api_subscription['plan'];
+            $subscription['amount'] = $plan ? ($plan['amount'] / 100).' '.$plan['currency'] : '-';
+
+            $subscription['next_billing'] = empty($api_subscription['next_period_start'])
+                ? '-'
+                : (new DateTime($api_subscription['next_period_start']))->format('d M Y');
+            $subscription['sub_handle'] = $api_subscription['handle'];
+
+            $data[] = ['subscription' => $subscription];
         }
 
         $this->context->smarty->assign(['subscriptions' => $data]);
-        $this->setTemplate('my_subscriptions.tpl');
+        $this->setTemplate('module:billwerksubscription/views/templates/front/my_subscriptions.tpl');
     }
 }

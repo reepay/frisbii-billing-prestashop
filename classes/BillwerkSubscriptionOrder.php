@@ -26,6 +26,22 @@ class BillwerkSubscriptionOrder extends ObjectModel
         ],
     ];
 
+    /**
+     * FP-36: an invoice handle is letters, digits, "_", "." and "-" only (same rule as BillwerkPlusApi::segment()).
+     * Anything else must never be stored, because the admin pages print it.
+     *
+     * @param mixed $handle
+     *
+     * @return bool
+     */
+    public static function isValidInvoiceHandle($handle)
+    {
+        return is_string($handle)
+            && 1 === preg_match('/^[A-Za-z0-9_.-]{1,64}$/D', $handle)
+            && 1 !== preg_match('/^\.+$/D', $handle)
+            && false === strpos($handle, '..');
+    }
+
     public static function saveOrderSubscription($id_shop, $id_order, $sub_handle, $inv_handle, $order_type = 'renewal')
     {
         $model = new self();
@@ -47,5 +63,21 @@ class BillwerkSubscriptionOrder extends ObjectModel
         $query->where('`id_order` = '.(int) $id_order);
 
         return Db::getInstance()->getRow($query);
+    }
+
+    /**
+     * RSCC-002: true when this invoice handle was already used for an order, so a repeated
+     * (or replayed) webhook event does not create a second order for it.
+     */
+    public static function existsByInvoiceHandle($inv_handle)
+    {
+        if (!is_string($inv_handle) || $inv_handle === '') {
+            return false;
+        }
+        $query = new DbQuery();
+        $query->from(self::TABLE_NAME);
+        $query->where('`inv_handle` = "'.pSQL($inv_handle).'"');
+
+        return (bool) Db::getInstance()->getRow($query);
     }
 }
