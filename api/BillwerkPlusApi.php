@@ -22,19 +22,22 @@ class BillwerkPlusApi
     }
 
     /**
-     * A URL path or query value built from a handle or id (FP-32). Refuses anything that
-     * could change which object the URL points to or add another parameter, so it is safe
-     * to put straight into the URL after this. Encodes what is left.
+     * A URL path or query value built from a handle or id (FP-32, FP-33). Accepts only letters,
+     * digits, "_", "-" and ".", up to 64 characters, never a value made only of dots and never
+     * "..". ("." and ".." are path steps that curl removes from the URL.) Anything else could change
+     * which object the URL points to or add a parameter, so it is refused.
      *
      * @return string|null null when the value must not be sent to Frisbii
      */
     protected static function segment($value)
     {
-        if ((!is_string($value) && !is_int($value)) || '' === (string) $value) {
+        if (!is_string($value) && !is_int($value)) {
             return null;
         }
         $value = (string) $value;
-        if (false !== strpbrk($value, "/\\?#%") || false !== strpos($value, '..')) {
+        if (1 !== preg_match('/^[A-Za-z0-9_.-]{1,64}$/D', $value)
+            || 1 === preg_match('/^\.+$/D', $value)
+            || false !== strpos($value, '..')) {
             return null;
         }
 
@@ -302,8 +305,11 @@ class BillwerkPlusApi
      */
     public static function refundInvoice($handle)
     {
+        if (null === ($handle = self::segment($handle))) {
+            return self::rejected();
+        }
         $ch = self::curlSession();
-        $dataJson = json_encode(['invoice' => (string) $handle]);
+        $dataJson = json_encode(['invoice' => $handle]);
         curl_setopt($ch, CURLOPT_URL, 'https://api.reepay.com/v1/refund');
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataJson);

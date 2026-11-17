@@ -18,6 +18,17 @@ class BillwerkSubscriptionManageSubscriptionModuleFrontController extends Module
                 Context::getContext()->language->id, null, false, $id_shop));
         }
 
+        // FP-33 / RSCC-004: only the owner may manage a subscription, in the shop it was bought in.
+        if (in_array($action, ['pause', 'activate', 'cancel', 'uncancel', 'change-payment'], true)) {
+            $row = BillwerkSubscriptionSubscriptions::getById(Tools::getValue('handle'));
+            if (!$row
+                || (int) $row['presta_customer_id'] !== (int) Context::getContext()->customer->id
+                || (int) $row['id_shop'] !== (int) $id_shop) {
+                Tools::redirect(Context::getContext()->link->getPageLink('my-account', true,
+                    Context::getContext()->language->id, null, false, $id_shop));
+            }
+        }
+
         switch ($action) {
             case 'pause':
                 $this->pauseSubscription(Tools::getValue('handle'));
