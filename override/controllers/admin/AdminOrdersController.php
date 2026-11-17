@@ -62,8 +62,10 @@ class AdminOrdersController extends AdminOrdersControllerCore
         $query->where('`id_order` = '.(int) $id_order);
         $result = Db::getInstance()->getRow($query);
         if ($result) {
-            $link = "https://app.frisbii.com/#/rp/subscriptions/subscription/{$result['sub_handle']}";
-            return "<a href = {$link} target='_blank'>".$result['sub_handle'].'</a>';
+            // FP-36: quote the href, encode the handle and escape the text
+            $link = 'https://app.frisbii.com/#/rp/subscriptions/subscription/'.rawurlencode((string) $result['sub_handle']);
+
+            return '<a href="'.Tools::safeOutput($link).'" target="_blank" rel="noopener">'.Tools::safeOutput((string) $result['sub_handle']).'</a>';
         }
     }
 

@@ -87,6 +87,16 @@ class BillwerkSubscriptionActionValidateOrderController
                 $cart->id_shop
             );
 
+            // FP-36: store only plain handles. The order is already paid, so a bad value is dropped, not fatal.
+            if (!empty($sub_id) && !BillwerkSubscriptionSubscriptions::isValidHandle($sub_id)) {
+                PrestaShopLogger::addLog('Frisbii Subscription: order '.(int) $order->id.' has a subscription handle in a wrong format; it was not stored.', 2, null, 'Order', (int) $order->id, true);
+                $sub_id = '';
+            }
+            if (!empty($inv_handle) && !BillwerkSubscriptionOrder::isValidInvoiceHandle($inv_handle)) {
+                PrestaShopLogger::addLog('Frisbii Subscription: order '.(int) $order->id.' has an invoice handle in a wrong format; it was not stored.', 2, null, 'Order', (int) $order->id, true);
+                $inv_handle = '';
+            }
+
             BillwerkSubscriptionOrder::saveOrderSubscription($this->context->shop->id, $order->id, $sub_id, $inv_handle, $order_type);
         }
     }

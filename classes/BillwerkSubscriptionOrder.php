@@ -26,6 +26,22 @@ class BillwerkSubscriptionOrder extends ObjectModel
         ],
     ];
 
+    /**
+     * FP-36: an invoice handle is letters, digits, "_", "." and "-" only (same rule as BillwerkPlusApi::segment()).
+     * Anything else must never be stored, because the admin pages print it.
+     *
+     * @param mixed $handle
+     *
+     * @return bool
+     */
+    public static function isValidInvoiceHandle($handle)
+    {
+        return is_string($handle)
+            && 1 === preg_match('/^[A-Za-z0-9_.-]{1,64}$/D', $handle)
+            && 1 !== preg_match('/^\.+$/D', $handle)
+            && false === strpos($handle, '..');
+    }
+
     public static function saveOrderSubscription($id_shop, $id_order, $sub_handle, $inv_handle, $order_type = 'renewal')
     {
         $model = new self();
