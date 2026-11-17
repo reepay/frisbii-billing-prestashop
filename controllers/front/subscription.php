@@ -74,6 +74,8 @@ class BillwerkSubscriptionSubscriptionModuleFrontController extends ModuleFrontC
             $data['error'] = false;
         }
 
+        // FP-35: the action form must carry this token
+        $data['token'] = Tools::getToken('bws-manage-subscription');
         $data['enable_on_hold'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_ON_HOLD');
         $data['enable_cancel'] = Configuration::get('BILLWERKSUBSCRIPTION_ENABLE_CANCEL');
         $data['in_trial'] = $subscription['in_trial'];

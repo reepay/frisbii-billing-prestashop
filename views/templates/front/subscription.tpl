@@ -44,6 +44,7 @@
 
     <form method="POST" action="{$data['manage_subscription_link']|escape:'html':'UTF-8'}" class="bws-actions">
       <input type="hidden" name="handle" value="{$data['handle']|escape:'html':'UTF-8'}">
+      <input type="hidden" name="token" value="{$data['token']|escape:'html':'UTF-8'}">
       {if $data['state'] == 'active'}
         {if $data['enable_on_hold'] && $data['in_trial'] == false}
           <button type="submit" name="action" value="pause" class="btn btn-outline-primary btn-sm">{l s='Pause' mod='billwerksubscription'}</button>
